@@ -189,10 +189,22 @@ object CouchDBPlugin {
       }
     }
 
-
-    def docPath(id: String) = {
-      s"$dbName/$id"
+    def view(design: String, view: String, key: Option[String] = None): Future[Either[Throwable, JsValue]] = {
+      val path: String = viewPath(design, view)
+      conn.request(path).get().map {
+        r =>
+          if (r.status != 200) {
+            Left(ServerError("view not found", "GET", path, r))
+          } else {
+            Right(r.json)
+          }
+      }
     }
+
+
+    def docPath(id: String) = s"$dbName/$id"
+
+    def viewPath(design: String, view: String) =  s"$dbName/_design/$design/_view/$view"
 
     def doc(id: String, content: JsValue) = {
       val path = docPath(id)
