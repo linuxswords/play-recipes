@@ -9,13 +9,10 @@
         @form(action = routes.Recipe.submitForm){
 
         <fieldset>
-            @inputText(recipeForm("title"), 'placeholder -> "title")
-            @inputText(recipeForm("alternativeTitle"), 'placeholder -> "alternate title")
-            @textarea(recipeForm("comment"), 'placeholder -> "comment")
-
+            @inputText(recipeForm("title"), 'class -> "longtext", 'placeholder -> "title")
+            @inputText(recipeForm("alternativeTitle"), 'class -> "longtext", 'placeholder -> "alternate title")
             <h5>ingredients</h5>
             <ul class="ingredients">
-
             @repeat(recipeForm("ingredients"), min = 1){ ing =>
                 <li>
                     @inputText(ing("quantity"), '_label -> "", 'class -> "quantity", 'placeholder -> "quantity")
@@ -27,9 +24,10 @@
             </ul>
 
             <h5>keywords</h5>
-            @inputText(recipeForm("keywords"), 'placeholder -> "keyword/tag separated by whitespace")
+            @inputText(recipeForm("keywords"), 'class -> "longtext", 'placeholder -> "keyword/tag separated by whitespace")
             @inputText(recipeForm("timeRequired"), 'placeholder -> "time required")
-            @inputText(recipeForm("url"), 'placeholder -> "url")
+            @textarea(recipeForm("comment"), 'placeholder -> "comment")
+            @inputText(recipeForm("url"), 'class -> "longtext", 'placeholder -> "url")
 
             <button>submit</button>
 
