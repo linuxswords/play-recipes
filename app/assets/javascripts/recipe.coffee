@@ -10,5 +10,5 @@ $ ->
 
   jsRoutes.controllers.Recipe.allTitle().ajax({
     success: (rows) ->
-      $('.recipelist').append("<li>#{row.key}</li>") for row in rows
+      $('.recipelist').append("<li data-id='#{row.id}'>#{row.key}</li>") for row in rows
   })
