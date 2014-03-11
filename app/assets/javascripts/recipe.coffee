@@ -8,4 +8,7 @@ $ ->
       this.id = this.id.replace(/\d+/, count)
 
 
-  $('.recipelist')
+  jsRoutes.controllers.Recipe.allTitle().ajax({
+    success: (rows) ->
+      $('.recipelist').append("<li>#{row.key}</li>") for row in rows
+  })

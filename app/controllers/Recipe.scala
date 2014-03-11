@@ -13,7 +13,7 @@ import service.RecipeService
 object Recipe extends Controller {
 
 
-  def index = Action {
+  def index = Action { implicit request =>
     Ok(views.html.recipeForm(forms.RecipeForm.defaultRecipeForm))
   }
 
@@ -28,10 +28,7 @@ object Recipe extends Controller {
   }
 
   def allTitle = Action { implicit request =>
-    RecipeService.allTitles match {
-      case Left(_) => Ok("failed")
-      case Right(titles) => Ok(titles)
-    }
+    Ok(RecipeService.allTitles)
   }
 
 }

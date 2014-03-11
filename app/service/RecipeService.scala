@@ -12,7 +12,7 @@ import model.serialize.SerializeProvider._
  */
 object RecipeService {
   val db = CouchDBPlugin.db("recipe_test")
-  val design = "content"
+  val design = "recipe"
   val viewByTitle = "name"
 
   def store(recipe: Recipe) = Await.result(db.doc(java.util.UUID.randomUUID.toString, Json.toJson(recipe)), 5 seconds)
@@ -20,11 +20,7 @@ object RecipeService {
   def allTitles = {
 
     val result = Await.result(db.view(design, viewByTitle), 5 seconds)
-    val rows = result match {
-      case Left(_)    => result
-      case Right(res) => Right(res \ "rows")
-    }
-    rows
+    result \ "rows"
   }
 
-  }
+}

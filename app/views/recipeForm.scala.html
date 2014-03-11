@@ -1,4 +1,4 @@
-@(recipeForm: Form[_])
+@(recipeForm: Form[_])(implicit request: Request[AnyContent])
 
 @import helper._
 @import helper.twitterBootstrap._
@@ -31,12 +31,8 @@
             @inputText(recipeForm("timeRequired"), 'placeholder -> "time required")
             @inputText(recipeForm("url"), 'placeholder -> "url")
 
-
+            <button>submit</button>
 
         </fieldset>
-
-        <button>submit</button>
         }
-
-
 }

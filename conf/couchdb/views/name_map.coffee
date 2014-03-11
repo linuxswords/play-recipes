@@ -1,2 +1,2 @@
 (doc) ->
-  emit(doc.title, doc._id) if doc.title
+  emit doc.title if doc.title

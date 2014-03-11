@@ -2,31 +2,41 @@ h5 {
   clear: both;
 }
 
-fieldset {
+.content{
+  float: left;
+  width: 300px;
 
-  margin: 25px;
+  fieldset {
+    margin: 25px;
 
-  ul.ingredients {
-    display: inline;
-
-    li {
-      list-style: none;
+    ul.ingredients {
       display: inline;
-      float: left;
-      width: 400px;
-      clear: both;
 
-      div {
+      li {
+        list-style: none;
+        display: inline;
         float: left;
+        width: 400px;
+        clear: both;
 
-        input.quantity, input.unit {
-          width: 30px;
+        div {
+          float: left;
+
+          input.quantity, input.unit {
+            width: 30px;
+          }
+        }
+
+        .addIngredient{
+          margin: 23px 0  0 5px;
         }
       }
-
-      .addIngredient{
-        margin: 23px 0  0 5px;
-      }
     }
+  }
+}
+
+.sidebarright{
+  ul {
+    list-style: none;
   }
 }

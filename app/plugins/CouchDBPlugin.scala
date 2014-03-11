@@ -188,23 +188,30 @@ object CouchDBPlugin {
           }
       }
     }
+    def viewPath(name: String, view: String) = s"$dbName/_design/$name/_view/$view"
 
-    def view(design: String, view: String, key: Option[String] = None): Future[Either[Throwable, JsValue]] = {
-      val path: String = viewPath(design, view)
-      conn.request(path).get().map {
-        r =>
-          if (r.status != 200) {
-            Left(ServerError("view not found", "GET", path, r))
-          } else {
-            Right(r.json)
-          }
+    def view(name: String, view: String, key: Option[JsValue]=None,
+             startKey: Option[JsValue]=None,
+             endKey: Option[JsValue]=None,
+             params: List[(String, String)] = Nil) = {
+      val path = viewPath(name, view)
+      log.debug(s"requesting view with $path and key $key")
+      val keys = List(("key", key), ("startKey", startKey), ("endKey", endKey)).flatMap { case(key,value) =>
+        value.map { v =>
+          (key, Json.stringify(v))
+        }
       }
+      conn.request(path, (keys ++ params):_* ).get.map{
+        r =>
+          if (r.status > 299) {
+            throw ServerError("Error saving document ", "PUT", path, r)
+          }
+          r.json
+      }
+
     }
 
-
     def docPath(id: String) = s"$dbName/$id"
-
-    def viewPath(design: String, view: String) =  s"$dbName/_design/$design/_view/$view"
 
     def doc(id: String, content: JsValue) = {
       val path = docPath(id)
