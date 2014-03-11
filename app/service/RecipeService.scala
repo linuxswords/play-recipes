@@ -17,6 +17,8 @@ object RecipeService {
 
   def store(recipe: Recipe) = Await.result(db.doc(java.util.UUID.randomUUID.toString, Json.toJson(recipe)), 5 seconds)
 
+  def byId(id: String) = Await.result(db.doc(id), 5 seconds)
+
   def allTitles = {
 
     val result = Await.result(db.view(design, viewByTitle), 5 seconds)

@@ -9,6 +9,7 @@ GET    /recipeForm                  controllers.Recipe.index
 POST   /recipeForm                  controllers.Recipe.submitForm
 
 GET    /recipes/byTitle             controllers.Recipe.allTitle
+GET    /recipe/:id                  controllers.Recipe.byId(id)
 
 
 # Map static resources from the /public folder to the /assets URL path
