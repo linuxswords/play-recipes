@@ -3,9 +3,7 @@
 # ~~~~
 
 # Home page
-GET     /                           controllers.Application.index
-
-GET    /recipeForm                  controllers.Recipe.index
+GET    /                            controllers.Recipe.index
 POST   /recipeForm                  controllers.Recipe.submitForm
 
 GET    /recipes/byTitle             controllers.Recipe.allTitle
