@@ -11,7 +11,6 @@
         <fieldset>
             @inputText(recipeForm("title"), 'class -> "form-control longtext", 'placeholder -> "title")
             @inputText(recipeForm("alternativeTitle"), 'class -> "form-control longtext", 'placeholder -> "alternate title")
-            @textarea(recipeForm("instruction"),'class -> "form-control", 'placeholder -> "instruction", 'cols -> "40", 'rows -> "15")
             <ul class="ingredients">
             @repeat(recipeForm("ingredients"), min = 1){ ing =>
                 <li>
@@ -22,6 +21,7 @@
                 </li>
             }
             </ul>
+            @textarea(recipeForm("instruction"),'class -> "form-control", 'placeholder -> "instruction", 'cols -> "40", 'rows -> "15")
 
             @inputText(recipeForm("keywords"), 'class -> "form-control longtext", 'placeholder -> "keyword/tag separated by whitespace")
             @inputText(recipeForm("timeRequired"), 'class -> "form-control", 'placeholder -> "time required")
