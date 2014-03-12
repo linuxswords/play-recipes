@@ -21,6 +21,7 @@ object RecipeForm {
     mapping(
       "title" -> nonEmptyText,
       "alternativeTitle" -> optional(text),
+      "instruction" -> optional(text),
       "comment" -> optional(text),
       "ingredients" -> list(ingredientMapping),
       "keywords" -> optional(text),

@@ -27,6 +27,7 @@ object Ingredient{
  */
 case class Recipe(title: String,
                   alternateTitle: Option[String],
+                  instruction: Option[String],
                   comment: Option[String],
                   ingredients: List[Ingredient],
                   keywords: Option[List[String]],
@@ -34,18 +35,19 @@ case class Recipe(title: String,
                   url: Option[String])
 
 object Recipe{
-  val emptyRecipe = Recipe("", None, None, List(emptyIngredient), None, None, None)
+  val emptyRecipe = Recipe("", None, None, None, List(emptyIngredient), None, None, None)
 
   def formApply(title: String,
   alternateTitle: Option[String],
+  instruction: Option[String],
   comment: Option[String],
   ingredients: List[Ingredient],
   keywords: Option[String],
   timeRequired: Option[BigDecimal],
   url: Option[String]): Recipe = Recipe(
-      title, alternateTitle, comment, ingredients, keywords.map(_.split(" ")).map(_.toList), timeRequired, url)
+      title, alternateTitle, instruction, comment, ingredients, keywords.map(_.split(" ")).map(_.toList), timeRequired, url)
 
   def formUnapply(recipe: Recipe) = {
-    Option( ( recipe.title, recipe.alternateTitle, recipe.comment, recipe.ingredients, Option(recipe.keywords.mkString(" ")), recipe.timeRequired, recipe.url ) )
+    Option( ( recipe.title, recipe.alternateTitle, recipe.instruction, recipe.comment, recipe.ingredients, Option(recipe.keywords.mkString(" ")), recipe.timeRequired, recipe.url ) )
   }
 }
