@@ -1,10 +1,11 @@
 h5 {
   clear: both;
 }
+ul{
+  list-style: none;
+}
 
 .content{
-  float: left;
-  width: 400px;
 
   fieldset {
     margin: 25px;
@@ -35,13 +36,24 @@ h5 {
     }
 
     .longtext{
-      width: 250px;
+      width: 350px;
     }
   }
 }
 
-.sidebarright{
-  ul {
-    list-style: none;
+.recipelist{
+  li{
+    color: #3c763d;
+    cursor: pointer;
+    &:hover{
+      background-color: #dff0d8;
+      color: #31708f;
+    }
+  }
+}
+
+.showrecipe{
+  > div {
+    padding: 10px;
   }
 }

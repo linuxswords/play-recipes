@@ -12,20 +12,51 @@
         <script src="@routes.Assets.at("javascripts/recipe.js")" type="text/javascript"></script>
 
         <script type="text/javascript">
-            @Html(play.api.Routes.javascriptRouter("jsRoutes")(routes.javascript.Recipe.allTitle))
+            @Html(play.api.Routes.javascriptRouter("jsRoutes")(
+                routes.javascript.Recipe.allTitle,
+                routes.javascript.Recipe.byId
+        ))
         </script>
 
         @script
 
     </head>
   <body>
+    <div class="header"></div>
 
-   <div class="content">
+   <div class="content col-xs-4">
        @content
    </div>
-   <div class="sidebarright">
+   <div class="sidebarright col-xs-3">
        @recipeList()
    </div>
+
+  <div class="showrecipe col-xs-5"></div>
+
+  <script id="singleRecipe" type="text/x-handlebars-template">
+      <div class="recipe">
+          <div class="content">
+              <h1>{{title}}<br/><small>{{alternateTitle}}</small></h1>
+          <div class="comment">{{comment}}</div>
+          <div class="info">
+              <div class="time">{{timeRequired}}</div>
+              <div class="url">{{url}}</div>
+          </div>
+          <ul class="ingredients">
+              {{#each ingredients}}
+                <li>
+                    <span class="amount">{{amount}}</span>
+                    <span class="unit">{{unit}}</span>
+                    <span class="name">{{name}}</span>
+                </li>
+              {{/each}}
+          </ul>
+          <div class="instruction">
+              {{instruction}}
+          </div>
+
+      </div>
+  </script>
 
   </body>
 </html>
