@@ -15,7 +15,13 @@ object RecipeService {
   val design = "recipe"
   val viewByTitle = "name"
 
-  def store(recipe: Recipe) = Await.result(db.doc(java.util.UUID.randomUUID.toString, Json.toJson(recipe)), 5 seconds)
+  def store(recipe: Recipe, id: Option[String], revision: Option[String]) = {
+    if (id.isDefined && revision.isDefined) {
+      Await.result(db.update(id.get, revision.get, Json.toJson(recipe)), 5 seconds)
+    } else {
+      Await.result(db.doc(java.util.UUID.randomUUID.toString, Json.toJson(recipe)), 5 seconds)
+    }
+  }
 
   def byId(id: String) = Await.result(db.doc(id), 5 seconds)
 

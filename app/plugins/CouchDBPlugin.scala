@@ -223,7 +223,36 @@ object CouchDBPlugin {
           }
           r.json
       }
+    }
 
+    def forceUpdate(id: String, content: JsValue): Future[JsValue] = {
+      doc(id).flatMap{ _ match{
+        case Left(t) => throw new RuntimeException("Error saving document", t)
+        case Right(jsVal) =>
+          val rev = JsObject(Seq(("_rev" , jsVal \ "_rev")))
+          val mergedObject = content.as[JsObject].deepMerge(rev)
+          doc(id, mergedObject)
+      }
+      }
+    }
+
+
+    def update(id: String, rev: String, content: JsValue) = {
+      val path = docPath(id)
+
+      val revObject = JsObject(Seq("_rev" -> JsString(rev)))
+      val idObject = JsObject(Seq("_id" -> JsString(id)))
+
+      val contentWithRevisionAndId =
+        content.as[JsObject].deepMerge(idObject).deepMerge(revObject)
+      log.debug(s"Storing doc $path with content: ${contentWithRevisionAndId}")
+      conn.request(path).put(contentWithRevisionAndId).map {
+        r =>
+          if (r.status > 299) {
+            throw ServerError("Error saving document ", "PUT", path, r)
+          }
+          r.json
+      }
     }
   }
 

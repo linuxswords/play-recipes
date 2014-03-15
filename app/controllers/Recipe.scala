@@ -18,10 +18,16 @@ object Recipe extends Controller {
   }
 
   def submitForm = Action { implicit request =>
+
+
     forms.RecipeForm.recipeForm.bindFromRequest.fold(
      formWithError => Ok(views.html.index(formWithError)),
      validRecipe => {
-       val result = RecipeService.store(validRecipe)
+
+       val id = request.body.asFormUrlEncoded.get("_id").headOption
+       val rev = request.body.asFormUrlEncoded.get("_rev").headOption
+
+       val result = RecipeService.store(validRecipe, id, rev)
        Redirect(routes.Recipe.index.url)
      }
     )
