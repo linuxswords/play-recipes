@@ -6,7 +6,9 @@
 
 @main("enter a recipe") {
 
-@form(action = routes.Recipe.submitForm){
+<div id="formHolder">
+
+@form(action = routes.Recipe.submitForm, 'class -> "recipeForm"){
 
 <fieldset>
     @inputText(recipeForm("title"), 'class -> "form-control longtext", 'placeholder -> "title")
@@ -32,4 +34,5 @@
 
 </fieldset>
 }
+</div>
 }

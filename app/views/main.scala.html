@@ -14,6 +14,7 @@
         <script type="text/javascript">
             @Html(play.api.Routes.javascriptRouter("jsRoutes")(
                 routes.javascript.Recipe.allTitle,
+                routes.javascript.Recipe.submitForm,
                 routes.javascript.Recipe.byId
         ))
         </script>
@@ -22,7 +23,9 @@
 
     </head>
   <body>
-    <div class="header"></div>
+    <div style="display: none" class="message">
+      <button type="button" class="close" aria-hidden="true">&times;</button>
+    </div>
 
    <div class="content col-xs-4">
        @content
@@ -39,8 +42,8 @@
               <h1>{{title}}<br/><small>{{alternateTitle}}</small></h1>
           <div class="comment">{{comment}}</div>
           <div class="info">
-              <div class="time">{{timeRequired}}</div>
-              <div class="url">{{url}}</div>
+              {{#if timeRequired}}<div class="time">Zeit: {{timeRequired}}</div>{{/if}}
+              {{#if url}}<div class="url">Quelle: {{url}}</div>{{/if}}
           </div>
           <ul class="ingredients">
               {{#each ingredients}}
@@ -57,6 +60,81 @@
 
       </div>
   </script>
+
+    <script id="recipeTemplate" type="text/x-handlebars-template">
+      <form action="/recipeForm" method="POST">
+        <input type="hidden" name="_rev" value="{{_rev}}"/>
+        <input type="hidden" name="_id" value="{{_id}}"/>
+        <fieldset>
+          <div>
+            <div class="input">
+              <input type="text" name="title" value="{{title}}" class="form-control longtext"
+                     placeholder="title">
+            </div>
+          </div>
+          <div>
+            <div class="input">
+              <input type="text" name="alternativeTitle" value="{{alternateTitle}}"
+                     class="form-control longtext" placeholder="alternate title">
+            </div>
+          </div>
+          <ul class="ingredients">
+            {{#each ingredients}}
+            <li>
+              <div>
+                <div class="input">
+                  <input type="text" name="ingredients[0].quantity"
+                         value="{{amount}}" class="form-control quantity" placeholder="quantity">
+                </div>
+              </div>
+              <div>
+                <div class="input">
+                  <input type="text" name="ingredients[0].unit" value="{{unit}}"
+                         class="form-control unit" placeholder="g">
+                </div>
+              </div>
+              <div>
+                <div class="input">
+                  <input type="text" name="ingredients[0].name" value="{{name}}"
+                         class="form-control name" placeholder="name">
+                </div>
+              </div>
+              <span class="glyphicon glyphicon-plus addIngredient"></span>
+            </li>
+            {{/each}}
+          </ul>
+          <div>
+            <div class="input">
+              <textarea name="instruction" class="form-control" placeholder="instruction"
+                        cols="40" rows="15">{{instruction}}</textarea>
+            </div>
+          </div>
+          <div>
+            <div class="input">
+              <input type="text" name="keywords" value="{{keywords}}" class="form-control longtext"
+                     placeholder="keyword/tag separated by whitespace">
+            </div>
+          </div>
+          <div>
+            <div class="input">
+              <input type="text" name="timeRequired" value="{{timeRequired}}" class="form-control"
+                     placeholder="time required">
+            </div>
+          </div>
+          <div>
+            <div class="input">
+              <textarea name="comment" class="form-control" placeholder="comment">{{comment}}</textarea>
+            </div>
+          </div>
+          <div>
+            <div class="input">
+              <input type="text"placeholder="url" value="{{url}}" name="url">
+            </div>
+          </div>
+          <button class="btn btn-default">submit</button>
+        </fieldset>
+      </form>
+    </script>
 
   </body>
 </html>
