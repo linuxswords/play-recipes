@@ -19,7 +19,6 @@ object Recipe extends Controller {
 
   def submitForm = Action { implicit request =>
 
-
     forms.RecipeForm.recipeForm.bindFromRequest.fold(
      formWithError => Ok(views.html.index(formWithError)),
      validRecipe => {
@@ -30,7 +29,7 @@ object Recipe extends Controller {
        val rev = safeMap.get("_rev").headOption
 
        val result = RecipeService.store(validRecipe, id, rev)
-       Redirect(routes.Recipe.index.url)
+       Ok(result)
      }
     )
   }
@@ -40,7 +39,6 @@ object Recipe extends Controller {
   }
 
   def remove(id: String, rev: String) = Action { implicit request =>
-
     val res = RecipeService.delete(id, rev)
     Ok(res)
   }

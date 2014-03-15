@@ -48,19 +48,22 @@ $ ->
         recipe.showError('could not delete recipe')
     })
 
-  $('form.recipeForm').on 'submit', (e) ->
+  $('#formHolder').on 'submit', (e) ->
     e.preventDefault()
     data = $('form.recipeForm').serialize()
     jsRoutes.controllers.Recipe.submitForm().ajax({
       data: data,
-      success: () ->
-        recipe.showInfo('success')
+      success: (data) ->
+        recipe.showInfo('saved')
+        updateRecipeList()
+        showSingle(data.id)
       error: () ->
         recipe.showError('error')
     })
 
-
-  jsRoutes.controllers.Recipe.allTitle().ajax({
-    success: (rows) ->
-      $('.recipelist').append("<li class='recipetitle' data-id='#{row.id}'>#{row.key}</li>") for row in rows
-  })
+  updateRecipeList = () ->
+    jsRoutes.controllers.Recipe.allTitle().ajax({
+      success: (rows) ->
+        $('.recipelist').append("<li class='recipetitle' data-id='#{row.id}'>#{row.key}</li>") for row in rows
+    })
+  updateRecipeList()
