@@ -24,8 +24,10 @@ object Recipe extends Controller {
      formWithError => Ok(views.html.index(formWithError)),
      validRecipe => {
 
-       val id = request.body.asFormUrlEncoded.get("_id").headOption
-       val rev = request.body.asFormUrlEncoded.get("_rev").headOption
+       val body: Option[Map[String, Seq[String]]] = request.body.asFormUrlEncoded
+       val safeMap = body.map(m => m.withDefaultValue(Seq()))
+       val id = safeMap.get("_id").headOption
+       val rev = safeMap.get("_rev").headOption
 
        val result = RecipeService.store(validRecipe, id, rev)
        Redirect(routes.Recipe.index.url)
