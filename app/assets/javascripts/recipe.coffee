@@ -9,11 +9,11 @@ $ ->
   singleTemplate = Handlebars.compile($('#singleRecipe').html())
   recipeTemplate = Handlebars.compile($('#recipeTemplate').html())
 
-  $('.ingredients').on 'click', '.addIngredient', (e) ->
+  $('#formHolder').on 'click', '.addIngredient', (e) ->
     e.preventDefault()
-    count = $('.ingredients li').length
+    count = $('#formHolder .ingredients li').length
     console.log("we have #{count + 1} ingredients")
-    li = $(this).closest('li').clone(true).appendTo('.ingredients').find('input').each () ->
+    li = $(this).closest('li').clone(true).appendTo('#formHolder .ingredients').find('input').each () ->
       this.name = this.name.replace(/\d+/, count)
       this.id = this.id.replace(/\d+/, count)
 
