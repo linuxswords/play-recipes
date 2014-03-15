@@ -15,6 +15,7 @@
             @Html(play.api.Routes.javascriptRouter("jsRoutes")(
                 routes.javascript.Recipe.allTitle,
                 routes.javascript.Recipe.submitForm,
+                routes.javascript.Recipe.remove,
                 routes.javascript.Recipe.byId
         ))
         </script>
@@ -38,6 +39,7 @@
 
   <script id="singleRecipe" type="text/x-handlebars-template">
       <div class="recipe">
+          <span data-id="{{_id}}" data-rev="{{_rev}}" class="glyphicon glyphicon-trash delete"></span>
           <div class="content">
               <h1>{{title}}<br/><small>{{alternateTitle}}</small></h1>
           <div class="comment">{{comment}}</div>

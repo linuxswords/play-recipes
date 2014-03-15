@@ -25,10 +25,27 @@ $ ->
   showSingle = (id) ->
     jsRoutes.controllers.Recipe.byId(id).ajax({
       success: (recipe) ->
+        console.log("loaded #{id}")
         content = singleTemplate(recipe)
         $('.showrecipe').html(content)
         content = recipeTemplate(recipe)
         $('#formHolder').html(content)
+    })
+
+  $('.showrecipe').on 'click', '.delete', (e) ->
+    id = $(this).data('id')
+    rev = $(this).data('rev')
+    deleteDoc(id, rev)
+
+
+  deleteDoc = (id, rev) ->
+    jsRoutes.controllers.Recipe.remove(id, rev).ajax({
+      success: (data) ->
+        $(".recipetitle[data-id='#{id}']").remove();
+        recipe.showInfo('successfully deleted')
+        $('.showrecipe .recipe').hide();
+      error: (data) ->
+        recipe.showError('could not delete recipe')
     })
 
   $('form.recipeForm').on 'submit', (e) ->

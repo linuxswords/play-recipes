@@ -236,6 +236,18 @@ object CouchDBPlugin {
       }
     }
 
+    def delete(id: String, rev: String): Future[JsValue] = {
+      val path = docPath(id)
+      log.debug(s"deleting doc $path")
+      conn.request(path, ("rev" -> rev)).delete() map {
+        r =>
+          if (r.status > 299) {
+            throw ServerError("Error saving document ", "DELETE", path, r)
+          }
+          r.json
+      }
+
+    }
 
     def update(id: String, rev: String, content: JsValue) = {
       val path = docPath(id)

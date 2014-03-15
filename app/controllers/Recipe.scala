@@ -37,9 +37,15 @@ object Recipe extends Controller {
     Ok(RecipeService.allTitles)
   }
 
+  def remove(id: String, rev: String) = Action { implicit request =>
+
+    val res = RecipeService.delete(id, rev)
+    Ok(res)
+  }
+
   def byId(id: String) = Action { implicit request =>
     RecipeService.byId(id) match {
-      case Left(t)      => Ok(Json.toJson(List("error", t.toString)))
+      case Left(t)      => UnprocessableEntity(Json.toJson(List("error", t.toString)))
       case Right(value) => Ok(value)
     }
   }

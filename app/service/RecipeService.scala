@@ -23,6 +23,8 @@ object RecipeService {
     }
   }
 
+  def delete(id: String, rev: String) = Await.result(db.delete(id, rev), 5 seconds)
+
   def byId(id: String) = Await.result(db.doc(id), 5 seconds)
 
   def allTitles = {
