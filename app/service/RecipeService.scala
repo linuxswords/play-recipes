@@ -1,9 +1,9 @@
 package service
 
 import plugins.CouchDBPlugin
-import play.api.libs.json.{JsArray, Json}
+import play.api.libs.json.{JsValue, JsArray, Json}
 import scala.concurrent.duration._
-import scala.concurrent.Await
+import scala.concurrent.{Future, Await}
 import model.Recipe
 import model.serialize.SerializeProvider._
 
@@ -23,14 +23,12 @@ object RecipeService {
     }
   }
 
-  def delete(id: String, rev: String) = Await.result(db.delete(id, rev), 5 seconds)
+  def delete(id: String, rev: String): Either[scala.Throwable, JsValue] = Await.result(db.delete(id, rev), 5 seconds)
 
-  def byId(id: String) = Await.result(db.doc(id), 5 seconds)
+  def byId(id: String):Either[scala.Throwable, JsValue] = Await.result(db.doc(id), 5 seconds)
 
-  def allTitles = {
-
-    val result = Await.result(db.view(design, viewByTitle), 5 seconds)
-    result \ "rows"
-  }
-
+  def allTitles: Either[scala.Throwable, JsValue] = Await.result(db.view(design, viewByTitle), 5 seconds) match {
+      case Left(t) => Left(t)
+      case Right(result )=> Right(result \ "rows")
+    }
 }

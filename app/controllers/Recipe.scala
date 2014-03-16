@@ -28,19 +28,26 @@ object Recipe extends Controller {
        val id = safeMap.get("_id").headOption
        val rev = safeMap.get("_rev").headOption
 
-       val result = RecipeService.store(validRecipe, id, rev)
-       Ok(result)
+       RecipeService.store(validRecipe, id, rev) match {
+         case Left(t)      => UnprocessableEntity(s"id: $id, rev: $rev, ${t.getMessage}")
+         case Right(value) => Ok(value)
+       }
      }
     )
   }
 
   def allTitle = Action { implicit request =>
-    Ok(RecipeService.allTitles)
+    RecipeService.allTitles match {
+      case Left(t)      => UnprocessableEntity(s"error: ${t.getMessage}")
+      case Right(value) => Ok(value)
+    }
   }
 
   def remove(id: String, rev: String) = Action { implicit request =>
-    val res = RecipeService.delete(id, rev)
-    Ok(res)
+    RecipeService.delete(id, rev) match {
+      case Left(t)      => UnprocessableEntity(s"id: $id, rev: $rev, ${t.getMessage}")
+      case Right(value) => Ok(value)
+    }
   }
 
   def byId(id: String) = Action { implicit request =>

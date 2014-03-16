@@ -188,12 +188,12 @@ object CouchDBPlugin {
           }
       }
     }
-    def viewPath(name: String, view: String) = s"$dbName/_design/$name/_view/$view"
+    private def viewPath(name: String, view: String) = s"$dbName/_design/$name/_view/$view"
 
     def view(name: String, view: String, key: Option[JsValue]=None,
              startKey: Option[JsValue]=None,
              endKey: Option[JsValue]=None,
-             params: List[(String, String)] = Nil) = {
+             params: List[(String, String)] = Nil): Future[Either[Throwable, JsValue]] = {
       val path = viewPath(name, view)
       log.debug(s"requesting view with $path and key $key")
       val keys = List(("key", key), ("startKey", startKey), ("endKey", endKey)).flatMap { case(key,value) =>
@@ -204,14 +204,14 @@ object CouchDBPlugin {
       conn.request(path, (keys ++ params):_* ).get.map{
         r =>
           if (r.status > 299) {
-            throw ServerError("Error saving document ", "PUT", path, r)
+            Left(ServerError("Error saving document ", "PUT", path, r))
           }
-          r.json
+          Right(r.json)
       }
 
     }
 
-    def docPath(id: String) = s"$dbName/$id"
+    private def docPath(id: String) = s"$dbName/$id"
 
     def doc(id: String, content: JsValue) = {
       val path = docPath(id)
@@ -219,13 +219,13 @@ object CouchDBPlugin {
       conn.request(path).put(content).map {
         r =>
           if (r.status > 299) {
-            throw ServerError("Error saving document ", "PUT", path, r)
+            Left(ServerError("Error saving document ", "PUT", path, r))
           }
-          r.json
+          Right(r.json)
       }
     }
 
-    def forceUpdate(id: String, content: JsValue): Future[JsValue] = {
+    def forceUpdate(id: String, content: JsValue): Future[Either[Throwable, JsValue]] = {
       doc(id).flatMap{ _ match{
         case Left(t) => throw new RuntimeException("Error saving document", t)
         case Right(jsVal) =>
@@ -236,20 +236,20 @@ object CouchDBPlugin {
       }
     }
 
-    def delete(id: String, rev: String): Future[JsValue] = {
+    def delete(id: String, rev: String): Future[Either[Throwable, JsValue]] = {
       val path = docPath(id)
       log.debug(s"deleting doc $path")
       conn.request(path, ("rev" -> rev)).delete() map {
         r =>
           if (r.status > 299) {
-            throw ServerError("Error saving document ", "DELETE", path, r)
+            Left(ServerError("Error saving document ", "DELETE", path, r))
           }
-          r.json
+          Right(r.json)
       }
 
     }
 
-    def update(id: String, rev: String, content: JsValue) = {
+    def update(id: String, rev: String, content: JsValue): Future[Either[Throwable, JsValue]]= {
       val path = docPath(id)
 
       val revObject = JsObject(Seq("_rev" -> JsString(rev)))
@@ -261,9 +261,9 @@ object CouchDBPlugin {
       conn.request(path).put(contentWithRevisionAndId).map {
         r =>
           if (r.status > 299) {
-            throw ServerError("Error saving document ", "PUT", path, r)
+            Left(ServerError("Error saving document ", "PUT", path, r))
           }
-          r.json
+          Right(r.json)
       }
     }
   }
