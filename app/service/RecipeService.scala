@@ -17,18 +17,20 @@ object RecipeService {
 
   def store(recipe: Recipe, id: Option[String], revision: Option[String]) = {
     if (id.isDefined && revision.isDefined) {
-      Await.result(db.update(id.get, revision.get, Json.toJson(recipe)), 5 seconds)
+      resolve(db.update(id.get, revision.get, Json.toJson(recipe)))
     } else {
-      Await.result(db.doc(java.util.UUID.randomUUID.toString, Json.toJson(recipe)), 5 seconds)
+      resolve(db.doc(java.util.UUID.randomUUID.toString, Json.toJson(recipe)))
     }
   }
 
-  def delete(id: String, rev: String): Either[scala.Throwable, JsValue] = Await.result(db.delete(id, rev), 5 seconds)
+  def delete(id: String, rev: String): Either[scala.Throwable, JsValue] = resolve(db.delete(id, rev))
 
-  def byId(id: String):Either[scala.Throwable, JsValue] = Await.result(db.doc(id), 5 seconds)
+  def byId(id: String):Either[scala.Throwable, JsValue] = resolve(db.doc(id))
 
-  def allTitles: Either[scala.Throwable, JsValue] = Await.result(db.view(design, viewByTitle), 5 seconds) match {
+  def allTitles: Either[scala.Throwable, JsValue] = resolve(db.view(design, viewByTitle)) match {
       case Left(t) => Left(t)
       case Right(result )=> Right(result \ "rows")
     }
+
+  private def resolve[T](future: Future[T]): T = Await.result(future, 5 seconds)
 }
