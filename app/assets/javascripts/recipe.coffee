@@ -1,9 +1,12 @@
 window.recipe = {}
 
 window.recipe.showInfo = (message) ->
-  $('.message').removeClass('bg-danger').addClass('bg-success').text(message).slideDown('slow')
+  window.recipe.message(message, 'bg-success')
 window.recipe.showError = (message) ->
-  $('.message').removeClass('bg-success').addClass('bg-danger').text(message).slideDown('slow')
+  window.recipe.message(message, 'bg-danger')
+
+window.recipe.message = (text, clazz) ->
+  $('#message').removeClass().addClass(clazz).text(text).slideDown('slow').delay(800).slideUp('fast')
 
 $ ->
   singleTemplate = Handlebars.compile($('#singleRecipe').html())
