@@ -16,6 +16,7 @@ import play.api.libs.json.JsString
 import scala.Some
 import play.api.libs.json.JsObject
 import plugins.CouchDBPlugin.{Server, Authentication, DBAccess}
+import com.ning.http.client.Realm.AuthScheme
 
 /**
  * @author knm
@@ -138,8 +139,12 @@ object CouchDBPlugin {
     }
 
     def request(path: String, params: (String, String)*) = {
-      WS.url(new URL(pUrl.getProtocol, pUrl.getHost, pUrl.getPort, s"${pUrl.getPath}/$path${encodeParams(params)}").toString)
-        .withHeaders(("Accept", "application/json"))
+      val baseUrl: URL = new URL(pUrl.getProtocol, pUrl.getHost, pUrl.getPort, s"${pUrl.getPath}/$path${encodeParams(params)}")
+      val baseWs = WS.url(baseUrl.toString).withHeaders(("Accept", "application/json"))
+      auth match {
+        case None    => baseWs
+        case Some(a) => baseWs.withAuth(a.user, a.password, AuthScheme.BASIC)
+      }
     }
   }
 
