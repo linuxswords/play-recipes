@@ -70,3 +70,6 @@ $ ->
         $('.recipelist').append("<li class='recipetitle' data-id='#{row.id}'>#{row.key}</li>") for row in rows
     })
   updateRecipeList()
+
+  $('#filterInput').on 'keyup', (e) ->
+    console.log($(this).val())
