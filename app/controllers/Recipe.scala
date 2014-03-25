@@ -43,6 +43,14 @@ object Recipe extends Controller {
     }
   }
 
+  def globalSearch(text: String) = Action { implicit request =>
+    RecipeService.globalSearch(text) match {
+      case Left(t)        => UnprocessableEntity(s"error on global search with '$text': error: ${t.getMessage}")
+      case Right(values)  => Ok(values)
+    }
+  }
+
+
   def remove(id: String, rev: String) = Action { implicit request =>
     RecipeService.delete(id, rev) match {
       case Left(t)      => UnprocessableEntity(s"id: $id, rev: $rev, ${t.getMessage}")

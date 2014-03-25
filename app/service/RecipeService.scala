@@ -14,6 +14,7 @@ object RecipeService {
   val db = CouchDBPlugin.db("recipe_test")
   val design = "recipe"
   val viewByTitle = "name"
+  val viewGlobalSearch = "globalsearch"
 
   def store(recipe: Recipe, id: Option[String], revision: Option[String]) = {
     if (id.isDefined && revision.isDefined) {
@@ -26,10 +27,17 @@ object RecipeService {
   def delete(id: String, rev: String): Either[scala.Throwable, JsValue] = resolve(db.delete(id, rev))
 
   def byId(id: String):Either[scala.Throwable, JsValue] = resolve(db.doc(id))
+  
+  def globalSearch(text: String) :Either[scala.Throwable, JsValue] = {
+    resolve(db.view(design, viewGlobalSearch, Some(Json.toJson(text.toLowerCase)))) match {
+      case Left(t)       => Left(t)
+      case Right(result) => Right(result \ "rows")
+    }
+  }
 
   def allTitles: Either[scala.Throwable, JsValue] = resolve(db.view(design, viewByTitle)) match {
-      case Left(t) => Left(t)
-      case Right(result )=> Right(result \ "rows")
+      case Left(t)       => Left(t)
+      case Right(result) => Right(result \ "rows")
     }
 
   private def resolve[T](future: Future[T]): T = Await.result(future, 5 seconds)

@@ -72,4 +72,13 @@ $ ->
   updateRecipeList()
 
   $('#filterInput').on 'keyup', (e) ->
-    console.log($(this).val())
+    text = $(this).val()
+    console.log text
+    if text != ""
+      jsRoutes.controllers.Recipe.globalSearch(text).ajax({
+        success: (rows) ->
+          $('.recipelist').html("")
+          $('.recipelist').append("<li class='recipetitle' data-id='#{row.id}'>#{row.value}</li>") for row in rows
+      })
+    else
+      updateRecipeList()
