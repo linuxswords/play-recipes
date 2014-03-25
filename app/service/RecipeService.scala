@@ -29,14 +29,15 @@ object RecipeService {
   def byId(id: String):Either[scala.Throwable, JsValue] = resolve(db.doc(id))
   
   def globalSearch(text: String) :Either[scala.Throwable, JsValue] = {
-    val results = resolve(db.view(design, viewGlobalSearch, Some(Json.toJson(text.toLowerCase))))
-    // TODO: unique here or in the couchdb?
-    results
+    resolve(db.view(design, viewGlobalSearch, Some(Json.toJson(text.toLowerCase)))) match {
+      case Left(t)       => Left(t)
+      case Right(result) => Right(result \ "rows")
+    }
   }
 
   def allTitles: Either[scala.Throwable, JsValue] = resolve(db.view(design, viewByTitle)) match {
-      case Left(t) => Left(t)
-      case Right(result )=> Right(result \ "rows")
+      case Left(t)       => Left(t)
+      case Right(result) => Right(result \ "rows")
     }
 
   private def resolve[T](future: Future[T]): T = Await.result(future, 5 seconds)

@@ -199,7 +199,7 @@ object CouchDBPlugin {
     def view(name: String, view: String, key: Option[JsValue]=None,
              startKey: Option[JsValue]=None,
              endKey: Option[JsValue]=None,
-             params: List[(String, String)] = Nil): Future[Either[Throwable, JsValue]] = {
+             params: List[(String, String)] = Nil): Future[Either[ServerError, JsValue]] = {
       val path = viewPath(name, view)
       log.debug(s"requesting view with $path and key $key")
       val keys = List(("key", key), ("startKey", startKey), ("endKey", endKey)).flatMap { case(key,value) =>
@@ -211,8 +211,9 @@ object CouchDBPlugin {
         r =>
           if (r.status > 299) {
             Left(ServerError("Error saving document ", "PUT", path, r))
+          } else {
+            Right(r.json)
           }
-          Right(r.json)
       }
     }
 
