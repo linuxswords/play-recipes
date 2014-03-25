@@ -29,7 +29,9 @@ object RecipeService {
   def byId(id: String):Either[scala.Throwable, JsValue] = resolve(db.doc(id))
   
   def globalSearch(text: String) :Either[scala.Throwable, JsValue] = {
-    resolve(db.view(design, viewGlobalSearch, Some(Json.toJson(text.toLowerCase)))) match {
+    val startKey = Json.toJson(text.toLowerCase())
+    val endKey = Json.toJson(text.toLowerCase() + "Z")
+    resolve(db.view(design, viewGlobalSearch, startKey = Option(startKey), endKey = Option(endKey))) match {
       case Left(t)       => Left(t)
       case Right(result) => Right(result \ "rows")
     }
