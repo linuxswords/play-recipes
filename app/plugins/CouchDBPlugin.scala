@@ -20,6 +20,7 @@ import com.ning.http.client.Realm.AuthScheme
 
 /**
  * @author knm
+ * @author bra
  */
 class CouchDBPlugin(app: Application) extends Plugin {
   val log = Logger(classOf[CouchDBPlugin])
@@ -123,7 +124,7 @@ object CouchDBPlugin {
     URLEncoder.encode(str, "UTF-8")
   }
 
-  case class ServerError(message: String, method: String, path: String, response: Response) extends Throwable(s"$message: $method => $path = ${response.status}: ${response.statusText}")
+  case class ServerError(message: String, method: String, path: String, response: Response, cause: Option[Throwable] = None) extends Throwable(s"$message: $method => $path = ${response.status}: ${response.statusText}")
 
   case class Authentication(user: String, password: String)
 
@@ -182,7 +183,7 @@ object CouchDBPlugin {
       }
     }
 
-    def doc(id: String): Future[Either[Throwable, JsValue]] = {
+    def doc(id: String): Future[Either[ServerError, JsValue]] = {
       val path = docPath(id)
       conn.request(path).get().map {
         r =>
@@ -213,7 +214,6 @@ object CouchDBPlugin {
           }
           Right(r.json)
       }
-
     }
 
     private def docPath(id: String) = s"$dbName/$id"
@@ -225,33 +225,43 @@ object CouchDBPlugin {
         r =>
           if (r.status > 299) {
             Left(ServerError("Error saving document ", "PUT", path, r))
+          } else {
+            Right(r.json)
           }
-          Right(r.json)
       }
     }
 
-    def forceUpdate(id: String, content: JsValue): Future[Either[Throwable, JsValue]] = {
-      doc(id).flatMap{ _ match{
-        case Left(t) => throw new RuntimeException("Error saving document", t)
+    def forceUpdate(id: String, content: JsValue): Future[Either[ServerError, JsValue]] = {
+      val path = docPath(id)
+      doc(id).flatMap { _ match {
+        case l @ Left(error) => Future(l)
         case Right(jsVal) =>
           val rev = JsObject(Seq(("_rev" , jsVal \ "_rev")))
           val mergedObject = content.as[JsObject].deepMerge(rev)
           doc(id, mergedObject)
+        }
       }
+    }
+    
+    def forceDelete(id: String): Future[Either[ServerError, JsValue]] = {
+      val path = docPath(id)
+      doc(id).flatMap { _ match {
+        case l @ Left(error) => Future(l)
+        case Right(jsVal) => 
+          val rev = (jsVal \ "_rev").toString
+          delete(id, rev)
+        }
       }
     }
 
-    def delete(id: String, rev: String): Future[Either[Throwable, JsValue]] = {
+    def delete(id: String, rev: String): Future[Either[ServerError, JsValue]] = {
       val path = docPath(id)
       log.debug(s"deleting doc $path")
       conn.request(path, ("rev" -> rev)).delete() map {
         r =>
-          if (r.status > 299) {
-            Left(ServerError("Error saving document ", "DELETE", path, r))
-          }
-          Right(r.json)
+          if (r.status > 299) Left(ServerError("Error removing document ", "DELETE", path, r))
+          else Right(r.json)
       }
-
     }
 
     def update(id: String, rev: String, content: JsValue): Future[Either[Throwable, JsValue]]= {
@@ -265,13 +275,9 @@ object CouchDBPlugin {
       log.debug(s"Storing doc $path with content: ${contentWithRevisionAndId}")
       conn.request(path).put(contentWithRevisionAndId).map {
         r =>
-          if (r.status > 299) {
-            Left(ServerError("Error saving document ", "PUT", path, r))
-          }
-          Right(r.json)
+          if (r.status > 299) Left(ServerError("Error saving document ", "PUT", path, r))
+          else Right(r.json)
       }
     }
   }
-
 }
-
