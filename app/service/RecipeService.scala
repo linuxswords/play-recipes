@@ -18,8 +18,9 @@ object RecipeService {
 
   def store(recipe: Recipe, id: Option[String], revision: Option[String]) = {
     if (id.isDefined && revision.isDefined) {
-      val rev = Json.toJson(revision.get).as[JsObject]
-      val recipeWithRevision = Json.toJson(recipe).as[JsObject].deepMerge(rev)
+      val rev = Json.toJson(revision.get)
+      val revO = JsObject(Seq(("_rev" , rev)))
+      val recipeWithRevision = Json.toJson(recipe).as[JsObject].deepMerge(revO)
       resolve(db.doc(id.get, recipeWithRevision))
     } else {
       resolve(db.doc(java.util.UUID.randomUUID.toString, Json.toJson(recipe)))
