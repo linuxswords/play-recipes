@@ -73,7 +73,6 @@ $ ->
 
   $('#filterInput').on 'keyup', (e) ->
     text = $(this).val()
-    console.log text
     if text != ""
       jsRoutes.controllers.Recipe.globalSearch(text).ajax({
         success: (rows) ->

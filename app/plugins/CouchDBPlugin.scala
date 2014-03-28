@@ -196,13 +196,13 @@ object CouchDBPlugin {
     }
     private def viewPath(name: String, view: String) = s"$dbName/_design/$name/_view/$view"
 
-    def view(name: String, view: String, key: Option[JsValue]=None,
-             startKey: Option[JsValue]=None,
-             endKey: Option[JsValue]=None,
+    def view(design: String, view: String, key: Option[JsValue] = None,
+             startKey: Option[JsValue] = None, endKey: Option[JsValue] = None,
+             includeDocs: Boolean = false, group: Boolean = false, reduce: Boolean = true,
              params: List[(String, String)] = Nil): Future[Either[ServerError, JsValue]] = {
-      val path = viewPath(name, view)
+      val path = viewPath(design, view)
       log.debug(s"requesting view with $path and key $key")
-      val keys = List(("key", key), ("startKey", startKey), ("endKey", endKey)).flatMap { case(key,value) =>
+      val keys = List(("key", key), ("startkey", startKey), ("endkey", endKey)).flatMap { case(key,value) =>
         value.map { v =>
           (key, Json.stringify(v))
         }
@@ -243,12 +243,12 @@ object CouchDBPlugin {
         }
       }
     }
-    
+
     def forceDelete(id: String): Future[Either[ServerError, JsValue]] = {
       val path = docPath(id)
       doc(id).flatMap { _ match {
         case l @ Left(error) => Future(l)
-        case Right(jsVal) => 
+        case Right(jsVal) =>
           val rev = (jsVal \ "_rev").toString
           delete(id, rev)
         }
