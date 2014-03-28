@@ -76,8 +76,11 @@ $ ->
     if text != ""
       jsRoutes.controllers.Recipe.globalSearch(text).ajax({
         success: (rows) ->
+          uniqrows = _.unique(rows, (row) ->
+            row.id
+            )
           $('.recipelist').html("")
-          $('.recipelist').append("<li class='recipetitle' data-id='#{row.id}'>#{row.value}</li>") for row in rows
+          $('.recipelist').append("<li class='recipetitle' data-id='#{row.id}'>#{row.value}</li>") for row in uniqrows
       })
     else
       updateRecipeList()
