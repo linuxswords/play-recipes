@@ -19,8 +19,11 @@ import plugins.CouchDBPlugin.{Server, Authentication, DBAccess}
 import com.ning.http.client.Realm.AuthScheme
 
 /**
- * @author knm
- * @author bra
+ * https://github.com/oceth/play-thin-couchdb
+ *
+ * @author oceth
+ * @author linuxswords
+ * @author esarbe
  */
 class CouchDBPlugin(app: Application) extends Plugin {
   val log = Logger(classOf[CouchDBPlugin])
@@ -33,22 +36,21 @@ class CouchDBPlugin(app: Application) extends Plugin {
   }
 
   def updateDesign(dba: DBAccess, cfg: Configuration, rev: Option[String]): Future[DBAccess] = {
-    val docid = "_design/" + cfg.getString("name").get
+    val docid = "_design/"+cfg.getString("name").get
     log.info(s"Updating design $docid")
     val obj: mutable.Buffer[(String, JsValue)] = mutable.Buffer("_id" -> JsString(docid))
-    rev.foreach {
-      r =>
-        obj += ("_rev" -> JsString(r))
+    rev.foreach { r =>
+      obj += ("_rev" -> JsString(r))
     }
     obj += ("language" -> JsString(cfg.getString("language").getOrElse("javascript")))
 
     val views = for {
-      view <- cfg.getConfigList("views").get
-      vname <- view.getString("name")
+      view  <- cfg.getConfigList("views").get
+      vname = view.getString("name").get
     } yield {
       val map = view.getString("map").get
       val reduce = view.getString("reduce")
-      if (reduce.isDefined) {
+      if(reduce.isDefined) {
         (vname, Json.obj(
           "map" -> resolveResource(map),
           "reduce" -> resolveResource(reduce.get)
@@ -64,28 +66,21 @@ class CouchDBPlugin(app: Application) extends Plugin {
     dba.doc(docid, JsObject(obj)).map(design => dba)
   }
 
-  private def updateDesigns(fdb: Future[DBAccess]): Future[DBAccess] = fdb flatMap {
-    db =>
-      val designs = db.cfg.getConfigList("designs").getOrElse(Collections.emptyList[Configuration]())
-      designs.foldLeft(future(db)) {
-        case (chain, cfg) =>
-          chain.flatMap {
-            cdb =>
-              cdb.doc("_design/" + cfg.getString("name").get).flatMap {
-                case Right(value) => if (!validateDesignDoc(value, cfg)) {
-                  updateDesign(cdb, cfg, Some((value \ "_rev").as[String]))
-                } else {
-                  future(cdb)
-                }
-                case _ => updateDesign(cdb, cfg, None)
-              }
-          }
+  private def updateDesigns(fdb: Future[DBAccess]): Future[DBAccess] = fdb flatMap { db =>
+    val designs = db.cfg.getConfigList("designs").getOrElse(Collections.emptyList[Configuration]())
+    designs.foldLeft(future(db)) { case (chain, cfg) =>
+      chain.flatMap { cdb =>
+        cdb.doc("_design/"+cfg.getString("name").get).flatMap {
+          case Right(value) => if(!validateDesignDoc(value, cfg)) { updateDesign(cdb, cfg, Some((value \ "_rev").as[String])) } else { future(cdb) }
+          case _ => updateDesign(cdb, cfg, None)
+        }
       }
+    }
   }
 
   override def onStart() {
     log.info("Starting couchdb plugin")
-    for ((_, dba) <- db) {
+    for((_, dba) <- db) {
       log.info(s"Checking db ${dba.dbName} for existence")
       Await.result(updateDesigns(dba.createIfNotExists), 60.seconds)
     }
@@ -93,9 +88,8 @@ class CouchDBPlugin(app: Application) extends Plugin {
 
   lazy val server = {
     val serverSettings = app.configuration.getConfig("couchdb.server").get
-    val auth = serverSettings.getConfig("auth").map {
-      c =>
-        Authentication(c.getString("user").get, c.getString("password").get)
+    val auth = serverSettings.getConfig("auth").map { c =>
+      Authentication(c.getString("user").get, c.getString("password").get)
     }
     val serverUrl: String = serverSettings.getString("url").get
     log.info(s"Initializing server at $serverUrl")
@@ -114,27 +108,31 @@ class CouchDBPlugin(app: Application) extends Plugin {
   }
 }
 
-
 object CouchDBPlugin {
-
-  // TODO: make this more robust
-  def db(name: String) = Play.maybeApplication.get.plugin(classOf[CouchDBPlugin]).get.db.get(name).get
+  def db(name: String) = {
+    Play.maybeApplication.get.plugin(classOf[CouchDBPlugin]).get.db.get(name).get
+  }
 
   private def urienc(str: String): String = {
     URLEncoder.encode(str, "UTF-8")
   }
 
-  case class ServerError(message: String, method: String, path: String, response: Response, cause: Option[Throwable] = None) extends Throwable(s"$message: $method => $path = ${response.status}: ${response.statusText}")
-
   case class Authentication(user: String, password: String)
 
-  case class Server(url: String, auth: Option[Authentication] = None) {
+  case class ServerError(message: String, method: String, path: String, response: Response, cause: Option[Throwable] = None) extends Throwable(s"$message: $method => $path = ${response.status}: ${response.statusText}")
+
+  case class Server(url: String, auth: Option[Authentication]) {
     private lazy val pUrl = new URL(url)
 
+    /**
+     * Encodes query string parameters
+     * @param params List of the parameters
+     * @return encoded parameters starting with "?" or empty string if no parameters were provided
+     */
     private def encodeParams(params: Seq[(String, String)]): String = {
-      val (_, encodedParams) = params.foldLeft(("?", "")) {
-        case ((seq, queryStr), element) =>
-          ("&", queryStr + seq + urienc(element._1) + "=" + urienc(element._2))
+
+      val (_, encodedParams) = params.foldLeft(("?", "")) { case ((sep, queryStr), elm) =>
+        ("&", queryStr+sep+urienc(elm._1)+"="+urienc(elm._2))
       }
       encodedParams
     }
@@ -149,108 +147,32 @@ object CouchDBPlugin {
     }
   }
 
-
   case class DBAccess(dbName: String, cfg: Configuration, conn: Server) {
-
     val log = Logger(classOf[DBAccess])
 
-    def create: Future[JsValue] = {
-      conn.request(dbName).put("").map {
-        r =>
-          if (r.status != 201) {
-            throw ServerError("Error creating database", "PUT", dbName, r)
-          }
-          r.json
+    def create: Future[Either[ServerError, JsValue]] = {
+      conn.request(dbName).put("").map { r =>
+        if(r.status != 201) {
+          Left(ServerError("Error creating database", "PUT", dbName, r))
+        } else {
+          Right(r.json)
+        }
       }
     }
 
     def exists: Future[Boolean] = {
-      conn.request(dbName).head().map {
-        r =>
-          r.status == 200
+      conn.request(dbName).head().map { r =>
+        r.status == 200
       }
     }
 
     def createIfNotExists: Future[DBAccess] = {
-      exists.flatMap {
-        dbExists =>
-          if (!dbExists) {
-            log.info(s"Creating non-existing database ${dbName}")
-            create.map((_) => this)
-          } else {
-            future(this)
-          }
-      }
-    }
-
-    def doc(id: String): Future[Either[ServerError, JsValue]] = {
-      val path = docPath(id)
-      conn.request(path).get().map {
-        r =>
-          if (r.status != 200) {
-            Left(ServerError("Document not found", "GET", path, r))
-          } else {
-            Right(r.json)
-          }
-      }
-    }
-    private def viewPath(name: String, view: String) = s"$dbName/_design/$name/_view/$view"
-
-    def view(design: String, view: String, key: Option[JsValue] = None,
-             startKey: Option[JsValue] = None, endKey: Option[JsValue] = None,
-             includeDocs: Boolean = false, group: Boolean = false, reduce: Boolean = true,
-             params: List[(String, String)] = Nil): Future[Either[ServerError, JsValue]] = {
-      val path = viewPath(design, view)
-      log.debug(s"requesting view with $path and key $key")
-      val keys = List(("key", key), ("startkey", startKey), ("endkey", endKey)).flatMap { case(key,value) =>
-        value.map { v =>
-          (key, Json.stringify(v))
-        }
-      }
-      conn.request(path, (keys ++ params):_* ).get.map{
-        r =>
-          if (r.status > 299) {
-            Left(ServerError("Error saving document ", "PUT", path, r))
-          } else {
-            Right(r.json)
-          }
-      }
-    }
-
-    private def docPath(id: String) = s"$dbName/$id"
-
-    def doc(id: String, content: JsValue) = {
-      val path = docPath(id)
-      log.debug(s"Storing doc $path with content: ${content}")
-      conn.request(path).put(content).map {
-        r =>
-          if (r.status > 299) {
-            Left(ServerError("Error saving document ", "PUT", path, r))
-          } else {
-            Right(r.json)
-          }
-      }
-    }
-
-    def forceUpdate(id: String, content: JsValue): Future[Either[ServerError, JsValue]] = {
-      val path = docPath(id)
-      doc(id).flatMap { _ match {
-        case l @ Left(error) => Future(l)
-        case Right(jsVal) =>
-          val rev = JsObject(Seq(("_rev" , jsVal \ "_rev")))
-          val mergedObject = content.as[JsObject].deepMerge(rev)
-          doc(id, mergedObject)
-        }
-      }
-    }
-
-    def forceDelete(id: String): Future[Either[ServerError, JsValue]] = {
-      val path = docPath(id)
-      doc(id).flatMap { _ match {
-        case l @ Left(error) => Future(l)
-        case Right(jsVal) =>
-          val rev = (jsVal \ "_rev").toString
-          delete(id, rev)
+      exists.flatMap { dbExists =>
+        if(!dbExists) {
+          log.info(s"Creating non-existing database ${dbName}")
+          create.map((_) => this)
+        } else {
+          future(this)
         }
       }
     }
@@ -260,24 +182,80 @@ object CouchDBPlugin {
       log.debug(s"deleting doc $path")
       conn.request(path, ("rev" -> rev)).delete() map {
         r =>
-          if (r.status > 299) Left(ServerError("Error removing document ", "DELETE", path, r))
-          else Right(r.json)
+          if (r.status > 299){
+            Left(ServerError("Error removing document ", "DELETE", path, r))
+          } else {
+            Right(r.json)
+          }
       }
     }
 
-    def update(id: String, rev: String, content: JsValue): Future[Either[Throwable, JsValue]]= {
+    def forceDelete(id: String): Future[Either[ServerError, JsValue]] = {
+      doc(id).flatMap { _ match {
+        case l @ Left(error) => Future(l)
+        case Right(jsVal) =>
+          val rev = (jsVal \ "_rev").toString
+          delete(id, rev)
+      }
+      }
+    }
+
+    private def docPath(id: String) = s"$dbName/$id"
+
+    def doc(id: String): Future[Either[ServerError, JsValue]] = {
       val path = docPath(id)
+      conn.request(path).get().map { r =>
+        if(r.status != 200) {
+          Left(ServerError("Document not found", "GET", path, r))
+        } else {
+          Right(r.json)
+        }
+      }
+    }
 
-      val revObject = JsObject(Seq("_rev" -> JsString(rev)))
-      val idObject = JsObject(Seq("_id" -> JsString(id)))
 
-      val contentWithRevisionAndId =
-        content.as[JsObject].deepMerge(idObject).deepMerge(revObject)
-      log.debug(s"Storing doc $path with content: ${contentWithRevisionAndId}")
-      conn.request(path).put(contentWithRevisionAndId).map {
-        r =>
-          if (r.status > 299) Left(ServerError("Error saving document ", "PUT", path, r))
-          else Right(r.json)
+    def doc(id: String, content: JsValue): Future[Either[ServerError, JsValue]] = {
+      val path = docPath(id)
+      log.debug(s"Storing doc $path with content: ${content}")
+      conn.request(path).put(content).map { r =>
+        if(r.status > 299) {
+          Left(ServerError("Error saving document ", "PUT", path, r))
+        } else {
+          Right(r.json)
+        }
+      }
+    }
+
+    def forceDoc(id: String, content: JsValue): Future[Either[ServerError, JsValue]] = {
+      doc(id).flatMap { res =>
+        res.fold(
+          error => doc(id, content),
+          jsdoc => {
+            val rev = jsdoc \ "_rev"
+            val tr =
+              (__ \ "_rev").json.prune andThen
+                __.json.update((__ \ "_rev").json.put(rev))
+            doc(id, content.transform(tr).get)
+          }
+        )
+      }
+    }
+
+    def view(design: String, view: String, key: Option[JsValue] = None,
+             startKey: Option[JsValue] = None, endKey: Option[JsValue] = None,
+             includeDocs: Boolean = false, group: Boolean = false, reduce: Boolean = false,
+             params: List[(String, String)] = Nil): Future[Either[ServerError, JsValue]] = {
+      val path = docPath(s"_design/$design") + s"/_view/$view"
+      val genericParams = List("group" -> group.toString, "reduce" -> reduce.toString, "include_docs" -> includeDocs.toString)
+      val keyParams = List("key" -> key, "startkey" -> startKey, "endkey" -> endKey). flatMap { case(key,maybeValue) =>
+        maybeValue.map(v=>(key, Json.stringify(v)))
+      }
+      conn.request(path, (keyParams ++ genericParams ++ params):_*).get().map { r =>
+        if(r.status != 200) {
+          Left(ServerError("Error querying view", "GET", path, r))
+        } else {
+          Right(r.json)
+        }
       }
     }
   }

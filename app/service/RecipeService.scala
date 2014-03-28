@@ -1,7 +1,7 @@
 package service
 
 import plugins.CouchDBPlugin
-import play.api.libs.json.{JsValue, JsArray, Json}
+import play.api.libs.json.{JsObject, JsValue, JsArray, Json}
 import scala.concurrent.duration._
 import scala.concurrent.{Future, Await}
 import model.Recipe
@@ -18,7 +18,9 @@ object RecipeService {
 
   def store(recipe: Recipe, id: Option[String], revision: Option[String]) = {
     if (id.isDefined && revision.isDefined) {
-      resolve(db.update(id.get, revision.get, Json.toJson(recipe)))
+      val rev = Json.toJson(revision.get).as[JsObject]
+      val recipeWithRevision = Json.toJson(recipe).as[JsObject].deepMerge(rev)
+      resolve(db.doc(id.get, recipeWithRevision))
     } else {
       resolve(db.doc(java.util.UUID.randomUUID.toString, Json.toJson(recipe)))
     }
