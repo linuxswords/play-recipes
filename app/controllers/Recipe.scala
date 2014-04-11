@@ -5,16 +5,29 @@ import scala.concurrent.duration._
 import play.api._
 import play.api.mvc._
 import scala.concurrent.Await
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsError, JsValue, Json}
 import plugins.CouchDBPlugin
 import model.serialize.SerializeProvider._
 import service.RecipeService
+import model.Recipe
 
 object Recipe extends Controller {
 
 
   def index = Action { implicit request =>
     Ok(views.html.index(forms.RecipeForm.defaultRecipeForm))
+  }
+
+  def putRecipe = Action(BodyParsers.parse.json) { implicit request =>
+    import model.validation.RecipeValidator._
+    val recipe = request.body.validate[Recipe]
+    recipe.fold(
+     errors => UnprocessableEntity(Json.obj("status" -> "KO", "message" -> JsError.toFlatJson(errors))),
+     recipe => {
+       // save it here
+       Ok(Json.toJson(recipe))
+     }
+    )
   }
 
   def submitForm = Action { implicit request =>

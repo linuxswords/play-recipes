@@ -11,6 +11,8 @@ GET           /recipe/:id             controllers.Recipe.byId(id)
 DELETE        /recipe/:id/:rev        controllers.Recipe.remove(id, rev)
 GET           /globalsearch/:text     controllers.Recipe.globalSearch(text)
 
+PUT           /putRecipe              controllers.Recipe.putRecipe
+
 
 # Map static resources from the /public folder to the /assets URL path
 GET           /assets/*file           controllers.Assets.at(path="/public", file)
