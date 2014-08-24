@@ -31,7 +31,7 @@ $ ->
         console.log("loaded #{id}")
         content = singleTemplate(recipe)
         $('.showrecipe').html(content)
-        recipe.kw = recipe.keywords.join ' '
+        recipe.kw = recipe.keywords.join ' ' if recipe.keywords
         content = recipeTemplate(recipe)
         $('#formHolder').html(content)
     })
