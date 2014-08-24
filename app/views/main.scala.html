@@ -87,19 +87,19 @@
             <li>
               <div>
                 <div class="input">
-                  <input type="text" name="ingredients[0].quantity"
+                  <input type="text" name="ingredients[{{@@index}}].quantity"
                          value="{{amount}}" class="form-control quantity" placeholder="quantity">
                 </div>
               </div>
               <div>
                 <div class="input">
-                  <input type="text" name="ingredients[0].unit" value="{{unit}}"
+                  <input type="text" name="ingredients[{{@@index}}].unit" value="{{unit}}"
                          class="form-control unit" placeholder="g">
                 </div>
               </div>
               <div>
                 <div class="input">
-                  <input type="text" name="ingredients[0].name" value="{{name}}"
+                  <input type="text" name="ingredients[{{@@index}}].name" value="{{name}}"
                          class="form-control name" placeholder="name">
                 </div>
               </div>
